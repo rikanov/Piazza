@@ -1,0 +1,59 @@
+name: La Piazza Build Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Dependencies (SDL2)
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libsdl2-dev ninja-build
+
+    - name: Fetch ImGui
+      run: git clone --depth 1 https://github.com/ocornut/imgui.git vendor/imgui
+
+    - name: Configure CMake
+      run: cmake -B build -G Ninja
+
+    - name: Build
+      run: cmake --build build --config Release
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: LaPiazza-Linux
+        path: build/Codebreaker
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup vcpkg and install SDL2
+      run: |
+        git clone https://github.com/Microsoft/vcpkg.git
+        .\vcpkg\bootstrap-vcpkg.bat
+        .\vcpkg\vcpkg install sdl2:x64-windows
+
+    - name: Fetch ImGui
+      run: git clone --depth 1 https://github.com/ocornut/imgui.git vendor/imgui
+
+    - name: Configure CMake
+      run: cmake -B build -DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake
+
+    - name: Build
+      run: cmake --build build --config Release
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: LaPiazza-Windows
+        path: build/Release/Codebreaker.exe

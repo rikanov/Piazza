@@ -1,0 +1,10 @@
+
+build/
+bin/
+
+vendor/
+
+.vscode/
+.idea/
+.DS_Store
+*.kdev4
