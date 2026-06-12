@@ -3,56 +3,59 @@ name: La Piazza Build Pipeline
 on:
   push:
     branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   build-linux:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-
-    - name: Install Dependencies (SDL2)
+    
+    - name: Install Dependencies
       run: |
         sudo apt-get update
         sudo apt-get install -y libsdl2-dev ninja-build
-
+        
     - name: Fetch ImGui
       run: git clone --depth 1 https://github.com/ocornut/imgui.git vendor/imgui
-
+        
     - name: Configure CMake
-      run: cmake -B build -G Ninja
-
+      run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+      
     - name: Build
-      run: cmake --build build --config Release
-
+      run: cmake --build build
+      
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
         name: LaPiazza-Linux
         path: build/Piazza
 
-  build-windows:
-    runs-on: windows-latest
+  build-web:
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-
-    - name: Setup vcpkg and install SDL2
-      run: |
-        git clone https://github.com/Microsoft/vcpkg.git
-        .\vcpkg\bootstrap-vcpkg.bat
-        .\vcpkg\vcpkg install sdl2:x64-windows
-
+    
+    - name: Setup Emscripten
+      uses: mymindstorm/setup-emsdk@v14
+      
     - name: Fetch ImGui
       run: git clone --depth 1 https://github.com/ocornut/imgui.git vendor/imgui
-
-    - name: Configure CMake
-      run: cmake -B build -DCMAKE_TOOLCHAIN_FILE="C:/vcpkg/scripts/buildsystems/vcpkg.cmake" -DCMAKE_BUILD_TYPE=Release
+        
+    - name: Configure CMake for Web
+      # Itt az 'emcmake' parancs mondja meg a CMake-nek, hogy webre fordítunk
+      run: emcmake cmake -B build -DCMAKE_BUILD_TYPE=Release
+      
     - name: Build
-      run: cmake --build build --config Release
-
+      run: cmake --build build
+      
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: LaPiazza-Windows
-        path: build/Release/Piazza.exe
+        name: LaPiazza-Web
+        path: |
+          build/Piazza.html
+          build/Piazza.js
+          build/Piazza.wasm
