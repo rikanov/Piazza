@@ -20,3 +20,10 @@ sudo zypper in ncurses-devel libSDL2-devel cmake ninja
 
 # Ubuntu/Debian
 sudo apt-get install build-essential libsdl2-dev cmake ninja-build
+
+# 1. Clone the game repository 
+git clone [https://github.com/yourusername/Piazza.git]
+cd Piazza
+
+# 2. Fetch Dear ImGui into the vendor directory in to your project library
+git clone --depth 1 [https://github.com/ocornut/imgui.git] vendor/imgu
