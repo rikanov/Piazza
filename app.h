@@ -35,4 +35,5 @@ private:
     int win_state = 0;
     float win_timer = 0.0f;
     bool in_menu = false;
+    bool cheat_mode = false;
 };

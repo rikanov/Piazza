@@ -44,6 +44,7 @@ void App::generateGame() {
     win_timer = 0.0f;
     swaps_made = 0;
     in_menu = false; // Új játéknál mindig visszatérünk a játéktérre
+    cheat_mode = false; // Új játéknál a cheat alapértelmezetten ki van kapcsolva
 
     std::mt19937 rng((unsigned)time(nullptr));
     bool valid = false;
@@ -185,26 +186,30 @@ void App::renderUI() {
                 if (in_menu) {
                     // --- TITKOS MENÜ NÉZET ---
                     if (row == 3 && col == 0) {
-                        // BAL ALSÓ: PIROS (Kilépés)
+                        // BAL ALSÓ: PIROS (Cheat KI - Normál mód)
                         ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.8f, 0.2f, 0.2f, 1.0f));
                         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.0f, 0.3f, 0.3f, 1.0f));
                         ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.5f, 0.1f, 0.1f, 1.0f));
                         ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 8.0f);
 
-                        if (ImGui::Button("##exit", ImVec2(50, 50))) isRunning = false;
+                        if (ImGui::Button("##cheat_off", ImVec2(50, 50))) {
+                            cheat_mode = false; // Vissza a szigorú keretekhez
+                            in_menu = false;    // Menü bezárása
+                        }
 
                         ImGui::PopStyleVar();
                         ImGui::PopStyleColor(3);
                     }
                     else if (row == 3 && col == 3) {
-                        // JOBB ALSÓ: ZÖLD (Új játék)
+                        // JOBB ALSÓ: ZÖLD (Cheat BE - Végtelen lépés)
                         ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.8f, 0.2f, 1.0f));
                         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.3f, 1.0f, 0.3f, 1.0f));
                         ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.1f, 0.5f, 0.1f, 1.0f));
                         ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 8.0f);
 
-                        if (ImGui::Button("##play", ImVec2(50, 50))) {
-                            generateGame(); // Ez automatikusan visszavált in_menu = false-ra
+                        if (ImGui::Button("##cheat_on", ImVec2(50, 50))) {
+                            cheat_mode = true; // Végtelen lépés aktiválva
+                            in_menu = false;   // Menü bezárása
                         }
 
                         ImGui::PopStyleVar();
@@ -288,10 +293,13 @@ void App::renderUI() {
                                     marked[row][col] = marked[source->r][source->c];
                                     marked[source->r][source->c] = temp_mark;
 
-                                    swaps_made++; // Lépés levonása
+                                    // Lépés levonása CSAK akkor, ha a cheat nincs bekapcsolva
+                                    if (!cheat_mode) {
+                                        swaps_made++;
+                                    }
 
-                                    // Szigorú 5 lépéses határ ellenőrzése
-                                    if (swaps_made >= 5 && is_solved(code(secret_code), &guesses[0][0]) == 0) {
+                                    // Szigorú 5 lépéses határ ellenőrzése (szintén védve a cheat által)
+                                    if (!cheat_mode && swaps_made >= 5 && is_solved(code(secret_code), &guesses[0][0]) == 0) {
                                         generateGame();
                                     }
                                 }
@@ -341,6 +349,7 @@ void App::renderUI() {
             ImDrawList* draw_list = ImGui::GetWindowDrawList();
             int white_count = std::max(0, 4 - swaps_made);
 
+            // Ha a cheat aktív, a maradék lépések száma fagyasztottnak tűnik
             for (int i = 0; i < 4; ++i) {
                 float dx = static_cast<float>(i % 2) * 14.0f;
                 float dy = static_cast<float>(i / 2) * 14.0f;
